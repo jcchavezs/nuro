@@ -25,12 +25,17 @@ var ListCmd = &cobra.Command{
 
 		ctx := auth.InjectImageMetadata(cmd.Context(), auth.ImageMetadata{Registry: registry, Name: name})
 
-		d, err := getConfigDigestFromManifest(ctx, registry, name, reference)
+		insecure, err := cmd.Flags().GetBool("insecure")
+		if err != nil {
+			return fmt.Errorf("getting insecure flag: %w", err)
+		}
+
+		d, err := getConfigDigestFromManifest(ctx, registry, insecure, name, reference)
 		if err != nil {
 			return fmt.Errorf("getting config digest from manifest: %w", err)
 		}
 
-		l, err := getLabelsFromBlob(ctx, registry, name, d)
+		l, err := getLabelsFromBlob(ctx, registry, insecure, name, d)
 		if err != nil {
 			return fmt.Errorf("getting labels from config blob: %w", err)
 		}
