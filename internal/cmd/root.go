@@ -11,7 +11,6 @@ import (
 	"github.com/jcchavezs/nuro/internal/cmd/labels"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
-	prettyconsole "github.com/thessem/zap-prettyconsole"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -46,8 +45,7 @@ var RootCmd = &cobra.Command{
 	Short: "Get more information about your docker images",
 	Args:  cobra.NoArgs,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		log.Logger = prettyconsole.NewLogger(loglevel).
-			WithOptions(zap.ErrorOutput(zapcore.AddSync(cmd.ErrOrStderr())))
+		log.Init(loglevel, cmd.ErrOrStderr())
 
 		if netRCFile, _ := cmd.Flags().GetString("netrc-file"); netRCFile != "" {
 			if err := auth.LoadNetRCFile(cmd.Context(), netRCFile); err != nil {
@@ -68,8 +66,7 @@ var RootCmd = &cobra.Command{
 		return nil
 	},
 	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
-		_ = log.Logger.Sync()
-		return nil
+		return log.Close()
 	},
 	SilenceUsage:  true,
 	SilenceErrors: true,

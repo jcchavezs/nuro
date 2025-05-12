@@ -29,28 +29,36 @@ func (r errorResponse) Error() error {
 	return errors.Join(errs...)
 }
 
-func getConfigDigestFromManifest(ctx context.Context, registry, name, reference string) (string, error) {
+func getConfigDigestFromManifest(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
 	var (
 		digest string
 		err    error
 	)
 
-	if digest, err = getConfigDigestFromManifestSingle(ctx, registry, name, reference); err == nil {
+	if digest, err = getConfigDigestFromManifestSingle(ctx, registry, insecure, name, reference); err == nil {
 		return digest, nil
 	}
 
-	if digest, err = getConfigDigestFromManifestList(ctx, registry, name, reference); err == nil {
+	if digest, err = getConfigDigestFromManifestList(ctx, registry, insecure, name, reference); err == nil {
 		return digest, nil
 	}
 
 	return digest, err
 }
 
-func getConfigDigestFromManifestList(ctx context.Context, registry, name, reference string) (string, error) {
+func resolveProtocol(insecure bool) string {
+	if insecure {
+		return "http"
+	}
+
+	return "https"
+}
+
+func getConfigDigestFromManifestList(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
-		fmt.Sprintf("https://%s/v2/%s/manifests/%s", registry, name, reference),
+		fmt.Sprintf("%s://%s/v2/%s/manifests/%s", resolveProtocol(insecure), registry, name, reference),
 		nil,
 	)
 	if err != nil {
@@ -93,11 +101,11 @@ func getConfigDigestFromManifestList(ctx context.Context, registry, name, refere
 	return m.Config.Digest, nil
 }
 
-func getConfigDigestFromManifestSingle(ctx context.Context, registry, name, reference string) (string, error) {
+func getConfigDigestFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
-		fmt.Sprintf("https://%s/v2/%s/manifests/%s", registry, name, reference),
+		fmt.Sprintf("%s://%s/v2/%s/manifests/%s", resolveProtocol(insecure), registry, name, reference),
 		nil,
 	)
 	if err != nil {
@@ -137,7 +145,7 @@ func getConfigDigestFromManifestSingle(ctx context.Context, registry, name, refe
 		return "", fmt.Errorf("decoding response: %w", err)
 	}
 
-	return getConfigDigestFromManifestList(ctx, registry, name, m.Manifests[0].Digest)
+	return getConfigDigestFromManifestList(ctx, registry, insecure, name, m.Manifests[0].Digest)
 }
 
 type configBlob struct {
@@ -146,10 +154,10 @@ type configBlob struct {
 	} `json:"config"`
 }
 
-func getLabelsFromBlob(ctx context.Context, registry, name, digest string) (json.RawMessage, error) {
+func getLabelsFromBlob(ctx context.Context, registry string, insecure bool, name, digest string) (json.RawMessage, error) {
 	req, err := http.NewRequestWithContext(
 		ctx, "GET",
-		fmt.Sprintf("https://%s/v2/%s/blobs/%s", registry, name, digest),
+		fmt.Sprintf("%s://%s/v2/%s/blobs/%s", resolveProtocol(insecure), registry, name, digest),
 		nil,
 	)
 	if err != nil {
@@ -182,6 +190,7 @@ func getLabelsFromBlob(ctx context.Context, registry, name, digest string) (json
 
 func init() {
 	RootCmd.AddCommand(ListCmd)
+	RootCmd.PersistentFlags().Bool("insecure", false, "Allow communication with an insecure registry")
 }
 
 var RootCmd = &cobra.Command{
