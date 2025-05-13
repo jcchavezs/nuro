@@ -3,6 +3,7 @@
 A tool to get more information about your docker images.
 
 ![El Ñuro](image.png)
+
 Source: https://larepublica.pe
 
 ## Getting started
@@ -20,7 +21,7 @@ Available Commands:
 
 Flags:
   -h, --help                      help for nuro
-      --log-level zapcore.Level   Sets the log level (default error)
+      --log-level string   Sets the log level (default error)
       --netrc-file string         Read .netrc from file location
       --netrc-stdin               Read .netrc from stdin
 

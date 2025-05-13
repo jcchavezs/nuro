@@ -28,7 +28,7 @@ var loglevel zapcore.Level = zapcore.ErrorLevel
 
 func init() {
 	RootCmd.PersistentFlags().Var(
-		enumflag.New(&loglevel, "zapcore.Level", LevelIds, enumflag.EnumCaseInsensitive),
+		enumflag.New(&loglevel, "string", LevelIds, enumflag.EnumCaseInsensitive),
 		"log-level",
 		"Sets the log level",
 	)
