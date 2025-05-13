@@ -1,6 +1,11 @@
-# Ñuro
+# El Ñuro
 
 A tool to get more information about your docker images.
+
+![El Ñuro](image.png)
+Source: https://larepublica.pe
+
+## Getting started
 
 ```go
 Get more information about your docker images
@@ -20,6 +25,14 @@ Flags:
       --netrc-stdin               Read .netrc from stdin
 
 Use "nuro [command] --help" for more information about a command.
+```
+
+## Install 
+
+### Using Go
+
+```console
+go install github.com/jcchavezs/nuro@latest
 ```
 
 ## References
