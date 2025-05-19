@@ -1,3 +1,4 @@
+<!-- Generated file by make generate-readme. DO NOT EDIT. -->
 # El Ñuro
 
 A tool to get more information about your docker images.
@@ -8,7 +9,7 @@ Source: https://larepublica.pe
 
 ## Getting started
 
-```go
+```console
 Get more information about your docker images
 
 Usage:
@@ -17,18 +18,18 @@ Usage:
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
-  labels      Labels related commands
+  image       Image related commands
 
 Flags:
-  -h, --help                      help for nuro
-      --log-level string   Sets the log level (default error)
-      --netrc-file string         Read .netrc from file location
-      --netrc-stdin               Read .netrc from stdin
+  -h, --help                help for nuro
+      --log-level string    Sets the log level (default "error")
+      --netrc-file string   Read .netrc from file location
+      --netrc-stdin         Read .netrc from stdin
 
 Use "nuro [command] --help" for more information about a command.
 ```
 
-## Install 
+## Install
 
 ### Using Go
 
