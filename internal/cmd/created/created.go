@@ -1,6 +1,7 @@
 package created
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -48,20 +49,9 @@ var RootCmd = &cobra.Command{
 			return fmt.Errorf("getting labels from config blob: %w", err)
 		}
 
-		var created string
-		if cfg.Created.IsZero() {
-			l := cfg.Annotations
-			if len(l) == 0 {
-				l = cfg.Config.Labels
-			}
-
-			created = l["org.opencontainers.image.created"]
-		} else {
-			created = cfg.Created.Format(time.RFC3339)
-		}
-
-		if created == "" {
-			return fmt.Errorf("no creation date found")
+		created, ok := resolveDateFromConfig(cfg)
+		if !ok {
+			return errors.New("no creation date found")
 		}
 
 		if _, err := fmt.Fprint(cmd.OutOrStdout(), created); err != nil {
@@ -70,4 +60,24 @@ var RootCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func resolveDateFromConfig(cfg *blob.ConfigBlob) (string, bool) {
+	var created string
+	if cfg.Created.IsZero() {
+		var l map[string]string
+		if len(cfg.Annotations) != 0 {
+			l = cfg.Annotations
+		} else if len(cfg.Config.Labels) != 0 {
+			l = cfg.Config.Labels
+		} else {
+			return "", false
+		}
+
+		created = l["org.opencontainers.image.created"]
+	} else {
+		created = cfg.Created.Format(time.RFC3339)
+	}
+
+	return created, true
 }

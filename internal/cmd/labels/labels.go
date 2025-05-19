@@ -2,6 +2,7 @@ package labels
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/jcchavezs/nuro/internal/api/blob"
@@ -70,13 +71,13 @@ var RootCmd = &cobra.Command{
 			return fmt.Errorf("getting labels from config blob: %w", err)
 		}
 
-		l := cfg.Annotations
-		if len(l) == 0 {
+		var l map[string]string
+		if len(cfg.Annotations) != 0 {
+			l = cfg.Annotations
+		} else if len(cfg.Config.Labels) != 0 {
 			l = cfg.Config.Labels
-		}
-
-		if len(l) == 0 {
-			return fmt.Errorf("no labels found: %w", err)
+		} else {
+			return errors.New("no labels found")
 		}
 
 		switch outputFormat {
