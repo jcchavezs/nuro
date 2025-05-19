@@ -6,7 +6,8 @@ import (
 	"os"
 
 	"github.com/jcchavezs/nuro/internal/auth"
-	"github.com/jcchavezs/nuro/internal/cmd/image"
+	"github.com/jcchavezs/nuro/internal/cmd/created"
+	"github.com/jcchavezs/nuro/internal/cmd/labels"
 	"github.com/jcchavezs/nuro/internal/log"
 
 	"github.com/spf13/cobra"
@@ -14,8 +15,6 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
-
-type LogLevel enumflag.Flag
 
 var LevelIds = map[zapcore.Level][]string{
 	zap.DebugLevel: {"debug"},
@@ -34,10 +33,11 @@ func init() {
 	)
 
 	// Check netrc information https://www.gnu.org/software/inetutils/manual/html_node/The-_002enetrc-file.html
-	RootCmd.PersistentFlags().String("netrc-file", "", "Read .netrc from file location")
+	RootCmd.PersistentFlags().String("netrc-file", "", "Read .netrc from file location, has precedence over --netrc-stdin")
 	RootCmd.PersistentFlags().Bool("netrc-stdin", false, "Read .netrc from stdin")
 
-	RootCmd.AddCommand(image.RootCmd)
+	RootCmd.AddCommand(created.RootCmd)
+	RootCmd.AddCommand(labels.RootCmd)
 }
 
 var RootCmd = &cobra.Command{
@@ -51,9 +51,7 @@ var RootCmd = &cobra.Command{
 			if err := auth.LoadNetRCFile(cmd.Context(), netRCFile); err != nil {
 				return fmt.Errorf("loading netrc file: %w", err)
 			}
-		}
-
-		if netRCFromStdin, _ := cmd.Flags().GetBool("netrc-stdin"); netRCFromStdin {
+		} else if netRCFromStdin, _ := cmd.Flags().GetBool("netrc-stdin"); netRCFromStdin {
 			if stdin, err := io.ReadAll(os.Stdin); err != nil {
 				return fmt.Errorf("reading netrc from stdin: %w", err)
 			} else {

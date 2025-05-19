@@ -1,6 +1,7 @@
-package image
+package created
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -11,10 +12,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var createdCmd = &cobra.Command{
-	Use:     "created",
+func init() {
+	RootCmd.PersistentFlags().Bool("insecure", false, "Allow communication with an insecure registry")
+}
+
+var RootCmd = &cobra.Command{
+	Use:     "created <image>",
 	Short:   "Shows the creation date for a given image",
-	Example: "$ nuro image created alpine",
+	Example: "$ nuro created alpine",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		registry, name, tag, digest, err := image.ParseImage(args[0])
@@ -44,16 +49,9 @@ var createdCmd = &cobra.Command{
 			return fmt.Errorf("getting labels from config blob: %w", err)
 		}
 
-		var created string
-		if cfg.Created.IsZero() {
-			l := cfg.Annotations
-			if len(l) == 0 {
-				l = cfg.Config.Labels
-			}
-
-			created, _ = l["org.opencontainers.image.created"]
-		} else {
-			created = cfg.Created.Format(time.RFC3339)
+		created, ok := resolveDateFromConfig(cfg)
+		if !ok {
+			return errors.New("no creation date found")
 		}
 
 		if _, err := fmt.Fprint(cmd.OutOrStdout(), created); err != nil {
@@ -62,4 +60,24 @@ var createdCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func resolveDateFromConfig(cfg *blob.ConfigBlob) (string, bool) {
+	var created string
+	if cfg.Created.IsZero() {
+		var l map[string]string
+		if len(cfg.Annotations) != 0 {
+			l = cfg.Annotations
+		} else if len(cfg.Config.Labels) != 0 {
+			l = cfg.Config.Labels
+		} else {
+			return "", false
+		}
+
+		created = l["org.opencontainers.image.created"]
+	} else {
+		created = cfg.Created.Format(time.RFC3339)
+	}
+
+	return created, true
 }
