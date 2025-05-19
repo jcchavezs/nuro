@@ -1,15 +1,16 @@
-package labels
+package image
 
 import (
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	RootCmd.AddCommand(ListCmd)
+	RootCmd.AddCommand(createdCmd)
+	RootCmd.AddCommand(labelsCmd)
 	RootCmd.PersistentFlags().Bool("insecure", false, "Allow communication with an insecure registry")
 }
 
 var RootCmd = &cobra.Command{
-	Use:   "labels",
-	Short: "Labels related commands",
+	Use:   "image",
+	Short: "Image related commands",
 }

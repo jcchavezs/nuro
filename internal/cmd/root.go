@@ -6,9 +6,9 @@ import (
 	"os"
 
 	"github.com/jcchavezs/nuro/internal/auth"
+	"github.com/jcchavezs/nuro/internal/cmd/image"
 	"github.com/jcchavezs/nuro/internal/log"
 
-	"github.com/jcchavezs/nuro/internal/cmd/labels"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"go.uber.org/zap"
@@ -37,7 +37,7 @@ func init() {
 	RootCmd.PersistentFlags().String("netrc-file", "", "Read .netrc from file location")
 	RootCmd.PersistentFlags().Bool("netrc-stdin", false, "Read .netrc from stdin")
 
-	RootCmd.AddCommand(labels.RootCmd)
+	RootCmd.AddCommand(image.RootCmd)
 }
 
 var RootCmd = &cobra.Command{

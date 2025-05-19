@@ -7,6 +7,7 @@ import (
 
 const DockerRegistry = "registry-1.docker.io"
 
+// ParseImage parses an image name
 func ParseImage(image string) (registry string, name string, tag string, digest string, err error) {
 	if strings.HasPrefix(image, ":") || strings.HasPrefix(image, "@") || strings.HasPrefix(image, "/") {
 		err = errors.New("invalid image")
