@@ -1,4 +1,4 @@
-package image
+package created
 
 import (
 	"fmt"
@@ -11,10 +11,14 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var createdCmd = &cobra.Command{
-	Use:     "created",
+func init() {
+	RootCmd.PersistentFlags().Bool("insecure", false, "Allow communication with an insecure registry")
+}
+
+var RootCmd = &cobra.Command{
+	Use:     "created <image>",
 	Short:   "Shows the creation date for a given image",
-	Example: "$ nuro image created alpine",
+	Example: "$ nuro created alpine",
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		registry, name, tag, digest, err := image.ParseImage(args[0])
@@ -51,9 +55,13 @@ var createdCmd = &cobra.Command{
 				l = cfg.Config.Labels
 			}
 
-			created, _ = l["org.opencontainers.image.created"]
+			created = l["org.opencontainers.image.created"]
 		} else {
 			created = cfg.Created.Format(time.RFC3339)
+		}
+
+		if created == "" {
+			return fmt.Errorf("no creation date found")
 		}
 
 		if _, err := fmt.Fprint(cmd.OutOrStdout(), created); err != nil {

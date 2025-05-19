@@ -15,7 +15,9 @@ type ImageMetadata struct {
 	Name     string
 }
 
-var imageMetadataKey = struct{}{}
+type imageMetadataKey struct{}
+
+var ctxKey imageMetadataKey
 
 var netRC *netrc.Netrc
 
@@ -32,7 +34,7 @@ func LoadNetRC(ctx context.Context, netRCContents string) error {
 }
 
 func InjectImageMetadata(ctx context.Context, metadata ImageMetadata) context.Context {
-	return context.WithValue(ctx, imageMetadataKey, metadata)
+	return context.WithValue(ctx, ctxKey, metadata)
 }
 
 type authRoundTripper struct {
@@ -40,7 +42,7 @@ type authRoundTripper struct {
 }
 
 func (rt authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-	if metadata, ok := req.Context().Value(imageMetadataKey).(ImageMetadata); ok {
+	if metadata, ok := req.Context().Value(ctxKey).(ImageMetadata); ok {
 		if metadata.Registry == image.DockerRegistry {
 			if token, err := docker.GetToken(req.Context(), metadata.Name); err != nil {
 				return nil, fmt.Errorf("authenticating in docker registry: %w", err)

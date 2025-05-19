@@ -3,6 +3,9 @@ package image
 import (
 	"errors"
 	"strings"
+
+	"github.com/jcchavezs/nuro/internal/log"
+	"go.uber.org/zap"
 )
 
 const DockerRegistry = "registry-1.docker.io"
@@ -13,6 +16,8 @@ func ParseImage(image string) (registry string, name string, tag string, digest 
 		err = errors.New("invalid image")
 		return
 	}
+
+	fields := []zap.Field{}
 
 	switch strings.Count(image, "/") {
 	default:
@@ -27,7 +32,10 @@ func ParseImage(image string) (registry string, name string, tag string, digest 
 		registry, image, _ = strings.Cut(image, "/")
 	}
 
+	fields = append(fields, zap.String("registry", registry))
+
 	if strings.Contains(image, "@") {
+		fields = append(fields, zap.String("digest", digest))
 		image, digest, _ = strings.Cut(image, "@")
 	}
 
@@ -40,6 +48,8 @@ func ParseImage(image string) (registry string, name string, tag string, digest 
 	}
 
 	name = image
+	fields = append(fields, zap.String("name", name), zap.String("tag", tag))
+	log.Logger.Debug("Parsing image", fields...)
 
 	return
 }
