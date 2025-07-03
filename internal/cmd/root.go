@@ -36,6 +36,8 @@ func init() {
 	RootCmd.PersistentFlags().String("netrc-file", "", "Read .netrc from file location, has precedence over --netrc-stdin")
 	RootCmd.PersistentFlags().Bool("netrc-stdin", false, "Read .netrc from stdin")
 
+	RootCmd.MarkFlagsMutuallyExclusive("netrc-file", "netrc-stdin")
+
 	RootCmd.AddCommand(created.RootCmd)
 	RootCmd.AddCommand(labels.RootCmd)
 }
