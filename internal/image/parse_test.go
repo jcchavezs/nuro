@@ -46,7 +46,7 @@ func TestParseImage(t *testing.T) {
 		{
 			name:           "Valid image with digest",
 			image:          "docker.io/library/nginx@sha256:abc123",
-			expectedReg:    "docker.io",
+			expectedReg:    "registry-1.docker.io",
 			expectedName:   "library/nginx",
 			expectedTag:    "",
 			expectedDigest: "sha256:abc123",

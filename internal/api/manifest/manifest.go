@@ -8,6 +8,8 @@ import (
 
 	"github.com/jcchavezs/nuro/internal/api"
 	"github.com/jcchavezs/nuro/internal/http"
+	"github.com/jcchavezs/nuro/internal/log"
+	"go.uber.org/zap"
 )
 
 // GetConfigDigestFromManifest gets the digest of the config from the manifest
@@ -52,7 +54,7 @@ func GetConfigDigestFromManifestList(ctx context.Context, registry string, insec
 	if err != nil {
 		return "", fmt.Errorf("doing request: %w", err)
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint
 
 	if res.StatusCode != http.StatusOK {
 		var errRes api.ErrorResponse
@@ -124,7 +126,7 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 	if err != nil {
 		return "", fmt.Errorf("doing request: %w", err)
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint
 
 	if res.StatusCode != http.StatusOK {
 		var errRes api.ErrorResponse
@@ -134,8 +136,8 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 
 		return "", fmt.Errorf("unexpected status code %d: %w", res.StatusCode, errRes.Error())
 	}
-
-	switch res.Header.Get("Content-Type") {
+	contentType := res.Header.Get("Content-Type")
+	switch contentType {
 	case manifestV2ContentType:
 		m := manifest{}
 
@@ -156,6 +158,8 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 		}
 
 		return GetConfigDigestFromManifestList(ctx, registry, insecure, name, m.Manifests[0].Digest)
+	default:
+		log.Logger.Warn("Unexpected content type", zap.String("content-type", contentType))
 	}
 
 	return "", errors.New("unexpected content type")

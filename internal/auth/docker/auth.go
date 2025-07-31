@@ -18,7 +18,7 @@ func GetToken(ctx context.Context, image string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("doing request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("unexpected status code %d", resp.StatusCode)
