@@ -33,7 +33,7 @@ func GetConfigBlob(ctx context.Context, registry string, insecure bool, name, di
 	if err != nil {
 		return nil, fmt.Errorf("doing request: %w", err)
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint
 
 	if res.StatusCode != http.StatusOK {
 		var errRes api.ErrorResponse

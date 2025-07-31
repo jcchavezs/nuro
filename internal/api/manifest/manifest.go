@@ -52,7 +52,7 @@ func GetConfigDigestFromManifestList(ctx context.Context, registry string, insec
 	if err != nil {
 		return "", fmt.Errorf("doing request: %w", err)
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint
 
 	if res.StatusCode != http.StatusOK {
 		var errRes api.ErrorResponse
@@ -124,7 +124,7 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 	if err != nil {
 		return "", fmt.Errorf("doing request: %w", err)
 	}
-	defer res.Body.Close()
+	defer res.Body.Close() //nolint
 
 	if res.StatusCode != http.StatusOK {
 		var errRes api.ErrorResponse

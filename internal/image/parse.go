@@ -32,6 +32,10 @@ func ParseImage(image string) (registry string, name string, tag string, digest 
 		registry, image, _ = strings.Cut(image, "/")
 	}
 
+	if registry == "docker.io" {
+		registry = DockerRegistry
+	}
+
 	fields = append(fields, zap.String("registry", registry))
 
 	if strings.Contains(image, "@") {
