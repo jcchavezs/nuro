@@ -61,23 +61,31 @@ var RootCmd = &cobra.Command{
 			return fmt.Errorf("getting insecure flag: %w", err)
 		}
 
-		d, err := manifest.GetConfigDigestFromManifest(ctx, registry, insecure, name, reference)
-		if err != nil {
-			return fmt.Errorf("getting config digest from manifest: %w", err)
-		}
+		var (
+			l     map[string]string
+			found bool
+		)
 
-		cfg, err := blob.GetConfigBlob(ctx, registry, insecure, name, d)
-		if err != nil {
-			return fmt.Errorf("getting labels from config blob: %w", err)
-		}
+		if l, found, err = manifest.GetAnnotationsFromManifestSingle(ctx, registry, insecure, name, reference); err != nil {
+			return fmt.Errorf("getting annotations from manifest: %w", err)
+		} else if !found {
+			d, err := manifest.GetConfigDigestFromManifest(ctx, registry, insecure, name, reference)
+			if err != nil {
+				return fmt.Errorf("getting config digest from manifest: %w", err)
+			}
 
-		var l map[string]string
-		if len(cfg.Annotations) != 0 {
-			l = cfg.Annotations
-		} else if len(cfg.Config.Labels) != 0 {
-			l = cfg.Config.Labels
-		} else {
-			return errors.New("no labels found")
+			cfg, err := blob.GetConfigBlob(ctx, registry, insecure, name, d)
+			if err != nil {
+				return fmt.Errorf("getting labels from config blob: %w", err)
+			}
+
+			if len(cfg.Annotations) != 0 {
+				l = cfg.Annotations
+			} else if len(cfg.Config.Labels) != 0 {
+				l = cfg.Config.Labels
+			} else {
+				return errors.New("no labels found")
+			}
 		}
 
 		switch outputFormat {

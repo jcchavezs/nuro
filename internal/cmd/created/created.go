@@ -39,17 +39,28 @@ var RootCmd = &cobra.Command{
 			return fmt.Errorf("getting insecure flag: %w", err)
 		}
 
-		d, err := manifest.GetConfigDigestFromManifest(ctx, registry, insecure, name, reference)
-		if err != nil {
-			return fmt.Errorf("getting config digest from manifest: %w", err)
+		var (
+			created string
+			ok      bool
+		)
+		if l, found, err := manifest.GetAnnotationsFromManifestSingle(ctx, registry, insecure, name, reference); err != nil {
+			return fmt.Errorf("getting annotations from manifest: %w", err)
+		} else if !found {
+			d, err := manifest.GetConfigDigestFromManifest(ctx, registry, insecure, name, reference)
+			if err != nil {
+				return fmt.Errorf("getting config digest from manifest: %w", err)
+			}
+
+			cfg, err := blob.GetConfigBlob(ctx, registry, insecure, name, d)
+			if err != nil {
+				return fmt.Errorf("getting labels from config blob: %w", err)
+			}
+
+			created, ok = resolveDateFromConfig(cfg)
+		} else {
+			created, ok = l["org.opencontainers.image.created"]
 		}
 
-		cfg, err := blob.GetConfigBlob(ctx, registry, insecure, name, d)
-		if err != nil {
-			return fmt.Errorf("getting labels from config blob: %w", err)
-		}
-
-		created, ok := resolveDateFromConfig(cfg)
 		if !ok {
 			return errors.New("no creation date found")
 		}
