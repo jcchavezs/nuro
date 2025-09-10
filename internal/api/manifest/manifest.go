@@ -96,6 +96,7 @@ type manifestList struct {
 	Manifests []struct {
 		Digest string `json:"digest"`
 	} `json:"manifests"`
+	Annotations map[string]string `json:"annotations"`
 }
 
 const (
@@ -103,6 +104,50 @@ const (
 	manifestListV2ContentType = "application/vnd.docker.distribution.manifest.list.v2+json"
 	ociImageV1ContentType     = "application/vnd.oci.image.index.v1+json"
 )
+
+func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (map[string]string, bool, error) {
+	req, err := http.NewRequestWithContext(
+		ctx,
+		"GET",
+		fmt.Sprintf("%s://%s/v2/%s/manifests/%s", http.ResolveProtocol(insecure), registry, name, reference),
+		nil,
+	)
+	if err != nil {
+		return nil, false, fmt.Errorf("creating request: %w", err)
+	}
+
+	req.Header.Add("Accept", ociImageV1ContentType)
+	req.Header.Set("Accept-Encoding", "gzip")
+
+	res, err := http.Client.Do(req)
+	if err != nil {
+		return nil, false, fmt.Errorf("doing request: %w", err)
+	}
+	defer res.Body.Close() //nolint
+
+	if res.StatusCode != http.StatusOK {
+		var errRes api.ErrorResponse
+
+		if err := json.NewDecoder(res.Body).Decode(&errRes); err != nil {
+			return nil, false, fmt.Errorf("decoding error response: %w", err)
+		}
+
+		log.Logger.Debug("OCI Image Manifest V1 not found")
+		return nil, false, nil
+	}
+
+	if res.Header.Get("Content-Type") == ociImageV1ContentType {
+		m := manifestList{}
+
+		if err := json.NewDecoder(res.Body).Decode(&m); err != nil {
+			return nil, false, fmt.Errorf("decoding response: %w", err)
+		}
+
+		return m.Annotations, len(m.Annotations) > 0, nil
+	}
+
+	return nil, false, nil
+}
 
 // GetConfigDigestFromManifestSingle gets the digest of the config from a single manifest
 func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
