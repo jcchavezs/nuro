@@ -14,6 +14,7 @@ import (
 
 // GetConfigDigestFromManifest gets the digest of the config from the manifest
 func GetConfigDigestFromManifest(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
+	log.Logger.Debug("Getting config digest from a manifest")
 	var (
 		digest string
 		err    error
@@ -34,6 +35,7 @@ func GetConfigDigestFromManifest(ctx context.Context, registry string, insecure 
 
 // GetConfigDigestFromManifestList gets the digest of the config from a list manifest
 func GetConfigDigestFromManifestList(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
+	log.Logger.Debug("Getting config digest from a manifest list")
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
@@ -45,8 +47,8 @@ func GetConfigDigestFromManifestList(ctx context.Context, registry string, insec
 	}
 
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
+	req.Header.Add("Accept", ociImageIndexV1ContentType)
+	req.Header.Add("Accept", ociImageManifestV1ContentType)
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	req.Header.Set("Accept-Encoding", "gzip")
 
@@ -65,24 +67,29 @@ func GetConfigDigestFromManifestList(ctx context.Context, registry string, insec
 		return "", fmt.Errorf("unexpected status code %d: %w", res.StatusCode, errRes.Error())
 	}
 
-	switch res.Header.Get("Content-Type") {
-	case ociImageV1ContentType:
+	contentType := res.Header.Get("Content-Type")
+
+	switch contentType {
+	case ociImageIndexV1ContentType:
 		m := manifestList{}
 
 		if err := json.NewDecoder(res.Body).Decode(&m); err != nil {
-			return "", fmt.Errorf("decoding response: %w", err)
+			return "", fmt.Errorf("decoding %q response: %w", ociImageIndexV1ContentType, err)
 		}
-
+		//return "sha256:8e1939c6b02d37a2a16bf6e8dad40f95f2c8ede3595a4649729145fdf92efd34", nil
 		return m.Manifests[0].Digest, nil
-	case manifestV2ContentType:
+	case manifestV2ContentType, ociImageManifestV1ContentType:
 		m := manifest{}
 
 		if err := json.NewDecoder(res.Body).Decode(&m); err != nil {
-			return "", fmt.Errorf("decoding response: %w", err)
+			return "", fmt.Errorf("decoding %q response: %w", manifestV2ContentType, err)
 		}
 
 		return m.Config.Digest, nil
+	default:
+		log.Logger.Warn("Unexpected content type", zap.String("content-type", contentType))
 	}
+
 	return "", errors.New("unexpected content type")
 }
 
@@ -100,12 +107,14 @@ type manifestList struct {
 }
 
 const (
-	manifestV2ContentType     = "application/vnd.docker.distribution.manifest.v2+json"
-	manifestListV2ContentType = "application/vnd.docker.distribution.manifest.list.v2+json"
-	ociImageV1ContentType     = "application/vnd.oci.image.index.v1+json"
+	manifestV2ContentType         = "application/vnd.docker.distribution.manifest.v2+json"
+	manifestListV2ContentType     = "application/vnd.docker.distribution.manifest.list.v2+json"
+	ociImageIndexV1ContentType    = "application/vnd.oci.image.index.v1+json"
+	ociImageManifestV1ContentType = "application/vnd.oci.image.manifest.v1+json"
 )
 
 func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (map[string]string, bool, error) {
+	log.Logger.Debug("Getting annotations from a manifest single")
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
@@ -116,7 +125,7 @@ func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, inse
 		return nil, false, fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Add("Accept", ociImageV1ContentType)
+	req.Header.Add("Accept", ociImageIndexV1ContentType)
 	req.Header.Set("Accept-Encoding", "gzip")
 
 	res, err := http.Client.Do(req)
@@ -136,7 +145,7 @@ func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, inse
 		return nil, false, nil
 	}
 
-	if res.Header.Get("Content-Type") == ociImageV1ContentType {
+	if res.Header.Get("Content-Type") == ociImageIndexV1ContentType {
 		m := manifestList{}
 
 		if err := json.NewDecoder(res.Body).Decode(&m); err != nil {
@@ -151,6 +160,7 @@ func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, inse
 
 // GetConfigDigestFromManifestSingle gets the digest of the config from a single manifest
 func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
+	log.Logger.Debug("Getting config digest from a manifest single")
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
@@ -163,8 +173,8 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
 	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.index.v1+json")
-	req.Header.Add("Accept", "application/vnd.oci.image.manifest.v1+json")
+	req.Header.Add("Accept", ociImageIndexV1ContentType)
+	req.Header.Add("Accept", ociImageManifestV1ContentType)
 	req.Header.Set("Accept-Encoding", "gzip")
 
 	res, err := http.Client.Do(req)
@@ -191,7 +201,7 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 		}
 
 		return m.Config.Digest, nil
-	case manifestListV2ContentType:
+	case manifestListV2ContentType, ociImageIndexV1ContentType:
 		m := manifestList{}
 
 		if err := json.NewDecoder(res.Body).Decode(&m); err != nil {
