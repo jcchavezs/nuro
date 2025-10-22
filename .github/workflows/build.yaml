@@ -31,6 +31,8 @@ jobs:
           make generate
           git diff --exit-code
 
+      - run: make install-tools
+      
       - run: make lint
     
       - run: make test
