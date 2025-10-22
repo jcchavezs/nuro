@@ -7,7 +7,6 @@ require (
 	github.com/jedib0t/go-pretty v4.3.0+incompatible
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
-	github.com/thediveo/enumflag v0.10.1
 	github.com/thediveo/enumflag/v2 v2.0.7
 	github.com/thessem/zap-prettyconsole v0.5.2
 	github.com/yuseferi/zax/v2 v2.3.3
