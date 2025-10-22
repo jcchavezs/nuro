@@ -8,6 +8,7 @@ import (
 
 	"github.com/jcchavezs/nuro/internal/api"
 	"github.com/jcchavezs/nuro/internal/http"
+	"github.com/jcchavezs/nuro/internal/log"
 )
 
 type ConfigBlob struct {
@@ -20,6 +21,8 @@ type ConfigBlob struct {
 
 // GetConfigBlob gets the config blob using a digest
 func GetConfigBlob(ctx context.Context, registry string, insecure bool, name, digest string) (*ConfigBlob, error) {
+	log.Logger.Debug("Getting config blob")
+
 	req, err := http.NewRequestWithContext(
 		ctx, "GET",
 		fmt.Sprintf("%s://%s/v2/%s/blobs/%s", http.ResolveProtocol(insecure), registry, name, digest),
@@ -38,14 +41,13 @@ func GetConfigBlob(ctx context.Context, registry string, insecure bool, name, di
 	if res.StatusCode != http.StatusOK {
 		var errRes api.ErrorResponse
 		if err := json.NewDecoder(res.Body).Decode(&errRes); err != nil {
-			return nil, fmt.Errorf("decoding error response: %w", err)
+			return nil, fmt.Errorf("unexpected status code %d", res.StatusCode)
 		}
 
 		return nil, fmt.Errorf("unexpected status code %d: %w", res.StatusCode, errRes.Error())
 	}
 
 	c := &ConfigBlob{}
-
 	if err := json.NewDecoder(res.Body).Decode(c); err != nil {
 		return nil, fmt.Errorf("decoding response: %w", err)
 	}

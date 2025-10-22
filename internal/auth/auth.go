@@ -7,7 +7,9 @@ import (
 
 	"github.com/jcchavezs/nuro/internal/auth/docker"
 	"github.com/jcchavezs/nuro/internal/image"
+	"github.com/jcchavezs/nuro/internal/log"
 	"github.com/jdx/go-netrc"
+	"go.uber.org/zap"
 )
 
 type ImageMetadata struct {
@@ -44,15 +46,30 @@ type authRoundTripper struct {
 func (rt authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	if metadata, ok := req.Context().Value(ctxKey).(ImageMetadata); ok {
 		if metadata.Registry == image.DockerRegistry {
-			if token, err := docker.GetToken(req.Context(), metadata.Name); err != nil {
-				return nil, fmt.Errorf("authenticating in docker registry: %w", err)
-			} else {
-				req.Header.Set("Authorization", "Bearer "+token)
+			// we should only inject credentials when the host is docker registry, if
+			// it is a redirection e.g. CDN we shouldn't inject the credentials.
+			if req.URL.Host == image.DockerRegistry {
+				if token, err := docker.GetToken(req.Context(), metadata.Name); err != nil {
+					return nil, fmt.Errorf("authenticating in docker registry: %w", err)
+				} else if token != "" {
+					log.Logger.Debug("Setting docker authorization")
+					req.Header.Set("Authorization", "Bearer "+token)
+				}
 			}
 		} else if netRC != nil {
+			if metadata.Registry != req.URL.Host {
+				log.Logger.Warn(
+					"request URL host and registry host aren't the same",
+					zap.String("image_registry", metadata.Registry),
+					zap.String("request_url_host", req.URL.Host),
+				)
+			}
 			// Check if we have a netrc entry for the registry
 			if m := netRC.Machine(metadata.Registry); m != nil {
+				log.Logger.Debug("Setting netrc authorization", zap.String("registry", metadata.Registry))
 				req.Header.Set("Authorization", "Bearer "+m.Get("password"))
+			} else {
+				log.Logger.Debug("Netrc authorization not found")
 			}
 		}
 	}
