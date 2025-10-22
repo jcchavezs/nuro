@@ -54,8 +54,6 @@ func (rt authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 				} else if token != "" {
 					log.Logger.Debug("Setting docker authorization")
 					req.Header.Set("Authorization", "Bearer "+token)
-				} else {
-					log.Logger.Debug("Empty docker token")
 				}
 			}
 		} else if netRC != nil {
@@ -68,7 +66,7 @@ func (rt authRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) 
 			}
 			// Check if we have a netrc entry for the registry
 			if m := netRC.Machine(metadata.Registry); m != nil {
-				log.Logger.Debug("Setting netrc authorization")
+				log.Logger.Debug("Setting netrc authorization", zap.String("registry", metadata.Registry))
 				req.Header.Set("Authorization", "Bearer "+m.Get("password"))
 			} else {
 				log.Logger.Debug("Netrc authorization not found")

@@ -14,7 +14,7 @@ import (
 
 // GetConfigDigestFromManifest gets the digest of the config from the manifest
 func GetConfigDigestFromManifest(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
-	log.Logger.Debug("Getting config digest from a manifest")
+	log.Logger.Debug("Getting config digest from a manifest", zap.String("reference", reference))
 	var (
 		digest string
 		err    error
@@ -35,7 +35,7 @@ func GetConfigDigestFromManifest(ctx context.Context, registry string, insecure 
 
 // GetConfigDigestFromManifestList gets the digest of the config from a list manifest
 func GetConfigDigestFromManifestList(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
-	log.Logger.Debug("Getting config digest from a manifest list")
+	log.Logger.Debug("Getting config digest from a manifest list", zap.String("reference", reference))
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
@@ -114,7 +114,7 @@ const (
 )
 
 func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (map[string]string, bool, error) {
-	log.Logger.Debug("Getting annotations from a manifest single")
+	log.Logger.Debug("Getting annotations from a manifest single", zap.String("reference", reference))
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",
@@ -160,7 +160,7 @@ func GetAnnotationsFromManifestSingle(ctx context.Context, registry string, inse
 
 // GetConfigDigestFromManifestSingle gets the digest of the config from a single manifest
 func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, insecure bool, name, reference string) (string, error) {
-	log.Logger.Debug("Getting config digest from a manifest single")
+	log.Logger.Debug("Getting config digest from a manifest single", zap.String("reference", reference))
 	req, err := http.NewRequestWithContext(
 		ctx,
 		"GET",

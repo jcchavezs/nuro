@@ -14,7 +14,10 @@ var client = &http.Client{
 	Transport: log.WrapRoundTripper(http.DefaultTransport),
 }
 
-var cachedToken string
+var (
+	cachedToken       string
+	baseAuthDockerURL = "https://auth.docker.io"
+)
 
 func GetToken(ctx context.Context, image string) (string, error) {
 	if cachedToken != "" {
@@ -22,14 +25,15 @@ func GetToken(ctx context.Context, image string) (string, error) {
 		return cachedToken, nil
 	}
 
-	resp, err := client.Get("https://auth.docker.io/token?service=registry.docker.io&scope=repository:" + image + ":pull")
+	tokenURL := fmt.Sprintf("%s/token?service=registry.docker.io&scope=repository:%s:pull", baseAuthDockerURL, image)
+	resp, err := client.Get(tokenURL)
 	if err != nil {
 		return "", fmt.Errorf("doing request: %w", err)
 	}
 	defer resp.Body.Close() //nolint
 
 	if resp.StatusCode != http.StatusOK {
-		io.Copy(io.Discard, resp.Body)
+		_, _ = io.Copy(io.Discard, resp.Body)
 		// TODO: deal with error response
 		return "", fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
