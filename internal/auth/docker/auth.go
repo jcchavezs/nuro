@@ -30,6 +30,7 @@ func GetToken(ctx context.Context, image string) (string, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		io.Copy(io.Discard, resp.Body)
+		// TODO: deal with error response
 		return "", fmt.Errorf("unexpected status code %d", resp.StatusCode)
 	}
 

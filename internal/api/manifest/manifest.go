@@ -46,10 +46,10 @@ func GetConfigDigestFromManifestList(ctx context.Context, registry string, insec
 		return "", fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+	req.Header.Add("Accept", manifestListV2ContentType)
 	req.Header.Add("Accept", ociImageIndexV1ContentType)
 	req.Header.Add("Accept", ociImageManifestV1ContentType)
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
+	req.Header.Add("Accept", manifestV2ContentType)
 	req.Header.Set("Accept-Encoding", "gzip")
 
 	res, err := http.Client.Do(req)
@@ -171,8 +171,8 @@ func GetConfigDigestFromManifestSingle(ctx context.Context, registry string, ins
 		return "", fmt.Errorf("creating request: %w", err)
 	}
 
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.v2+json")
-	req.Header.Add("Accept", "application/vnd.docker.distribution.manifest.list.v2+json")
+	req.Header.Add("Accept", manifestV2ContentType)
+	req.Header.Add("Accept", manifestListV2ContentType)
 	req.Header.Add("Accept", ociImageIndexV1ContentType)
 	req.Header.Add("Accept", ociImageManifestV1ContentType)
 	req.Header.Set("Accept-Encoding", "gzip")
